@@ -282,8 +282,11 @@ class TranslateApi:
             rest = text
             for i in range(int(len(text) / 448) + 1):
                 # truncate with last period
-                if len(rest) > 448:
-                    truncated = rest[:448].rsplit(".", 1)[0]
+                if len(rest) > 448 and i != int(len(text) / 448):
+                    if "." in rest[:448]:
+                        truncated = rest[:448].rsplit(".", 1)[0]
+                    else:
+                        truncated = rest[:448]
                     texts.append(truncated)
                     rest = rest[len(truncated) :]
                 else:
