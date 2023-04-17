@@ -1,6 +1,6 @@
 # PDF Translator EN-JA
 
-This is a PDF translator that translates PDF files into Japanese.
+This is a PDF translator that translates PDF files into Japanese, preserving the original layout.
 
 <p align="center">
   <img src="./assets/sample1.png" width=100%>
@@ -8,44 +8,44 @@ This is a PDF translator that translates PDF files into Japanese.
 
 ## Features
 
-**Translate PDF files (e.g. paper) into Japanese**.
+This repository translates PDF files into Japanese, preserving the original layout. The translated PDF files are saved in `./outputs` directory.
 
-  This repository translates PDF files into Japanese using [FuguMT](https://huggingface.co/staka/fugumt-en-ja) model from [HuggingFace](https://huggingface.co/). The translated PDF files are saved in `./outputs` directory.
+To speed up the translation process, **translation is performed until "References" section in the PDF file**. After that, the rest of the page is copied as it is.
 
-  To speed up the translation process, **translation is performed until "References" section in the PDF file**. After that, the rest of the page is copied as it is.
+To be more readable, the translated PDF file displays the original PDF page in the left side and the translated text in the right side (see the image above).
 
 ## Installation
 
 1. **Clone this repository**
 
-   ```bash
-    git clone https://github.com/discus0434/pdf-translator.git
-    cd pdf-translator/docker
-   ```
+```bash
+   git clone https://github.com/discus0434/pdf-translator.git
+   cd pdf-translator/docker
+```
 
 2. **Build the docker image via Makefile**
 
-   ```bash
-    make build
-   ```
+```bash
+   make build
+```
 
 3. **Run the docker container via Makefile**
 
-   ```bash
-    make run
-   ```
+```bash
+   make run
+```
 
 ## Usage
 
-   ```bash
-    cd pdf-translator/docker && make translate INPUT="path/to/input.pdf"
-   ```
+```bash
+   cd pdf-translator/docker && make translate INPUT="path/to/input.pdf"
+```
 
-   The translated PDF files will be saved in `./outputs` directory.
+The translated PDF files will be saved in `./outputs` directory.
 
 ## Requirements
 
-- NVIDIA GPU + CUDA **(currently only support NVIDIA GPU)**
+- NVIDIA GPU **(currently only support NVIDIA GPU)**
 - Docker
 - Python 3+
 
@@ -59,7 +59,7 @@ This repository is licensed under CC BY-NC 4.0. See [LICENSE](./LICENSE.md) for 
 
 - For PDF to text conversion, using [PaddlePaddle](https://github.com/PaddlePaddle/PaddleOCR) model.
 
-- The docker image is based on [paddlepaddle/paddle](https://hub.docker.com/r/paddlepaddle/paddle/tags/) container.
+- The docker image is based on [paddlepaddle/paddle](https://hub.docker.com/r/paddlepaddle/paddle/tags/).
 
 - Font files are from [Source Han Serif](https://github.com/adobe-fonts/source-han-serif). **Due to the license, this repository does not allow commercial use.**
 
