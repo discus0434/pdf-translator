@@ -1,5 +1,4 @@
-# Base stage for common dependencies
-FROM paddlepaddle/paddle:2.4.1-gpu-cuda11.2-cudnn8.2-trt8.0 as base
+FROM paddlepaddle/paddle:2.4.1-gpu-cuda11.2-cudnn8.2-trt8.0
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV DEBCONF_NOWARNINGS=yes
@@ -12,12 +11,10 @@ RUN apt-get update \
         libpoppler-dev \
         wget git \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* /var/tmp/* \
+    && mkdir -p /home/pdf-translator
 
-# Builder stage for installing python packages
-FROM base as builder
-
-RUN git clone https://github.com/discus0434/pdf-translator.git
 WORKDIR /home/pdf-translator
 
 RUN pip install --no-cache-dir opencv-python-headless \
@@ -34,12 +31,4 @@ RUN pip install --no-cache-dir opencv-python-headless \
     torchaudio==0.12.1+cu113 \
     -f https://download.pytorch.org/whl/cu113/torch_stable.html
 
-RUN wget https://github.com/adobe-fonts/source-han-serif/raw/release/OTF/Japanese/SourceHanSerif-Light.otf
-
-# Final stage for the application
-FROM base as final
-
-COPY --from=builder /home/pdf-translator /home/pdf-translator
-WORKDIR /home/pdf-translator
-
-ENV PYTHONPATH=/home/pdf-translator
+RUN wget https://github.com/adobe-fonts/source-han-serif/raw/release/OTF/Japanese/SourceHanSerif-Light.otf -P /home/

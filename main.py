@@ -81,8 +81,6 @@ class TranslateApi:
                     image=image,
                     reached_references=reached_references,
                 )
-
-            if not reached_references:
                 fig, ax = plt.subplots(1, 2, figsize=(20, 14))
                 ax[0].imshow(original_img)
                 ax[1].imshow(img)
@@ -100,7 +98,7 @@ class TranslateApi:
 
     def __load_models(self):
         self.font = ImageFont.truetype(
-            "/home/pdf-translator/SourceHanSerif-Light.otf",
+            "/home/SourceHanSerif-Light.otf",
             size=self.FONT_SIZE,
         )
 
