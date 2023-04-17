@@ -14,6 +14,8 @@ To speed up the translation process, **translation is performed until "Reference
 
 To be more readable, the translated PDF file displays the original PDF page in the left side and the translated text in the right side (see the image above).
 
+**For some PDF file inputs, this repository may not work.**
+
 ## Installation
 
 1. **Clone this repository**
