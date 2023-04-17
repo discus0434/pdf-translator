@@ -179,7 +179,7 @@ class TranslateApi:
     ) -> Tuple[np.ndarray, np.ndarray, bool]:
         """Translate one page of the PDF file.
 
-        There are some heuristics to clean the results of translation:
+        There are some heuristics to clean-up the results of translation:
             1. Remove newlines, tabs, brackets, slashes, and pipes
             2. Reject the result if there are few Japanese characters
             3. Skip the translation if the text block has only one line
@@ -219,6 +219,11 @@ class TranslateApi:
                         print("skipped")
                         continue
 
+                    # if text is too short, skip
+                    if len(translated_text) < 20:
+                        print("skipped")
+                        continue
+
                     processed_text = fw_fill(
                         translated_text,
                         width=int(
@@ -249,7 +254,10 @@ class TranslateApi:
                         int(line["bbox"][0]) : int(line["bbox"][2]),
                     ] = new_block
             else:
-                title = self.ocr_model(line["img"])[1][0][0]
+                try:
+                    title = self.ocr_model(line["img"])[1][0][0]
+                except IndexError:
+                    continue
                 if title.lower() == "references" or title.lower() == "reference":
                     reached_references = True
         return img, original_img, reached_references
@@ -270,12 +278,12 @@ class TranslateApi:
             str
                 Translated text.
         """
-        if len(text) > 512:
+        if len(text) > 448:
             texts = []
             rest = text
-            for i in range(int(len(text) / 512) + 1):
+            for i in range(int(len(text) / 448) + 1):
                 # truncate with last period
-                truncated = rest[: (i + 1) * 512].rsplit(".", 1)[0]
+                truncated = rest[: (i + 1) * 448].rsplit(".", 1)[0]
                 texts.append(truncated)
                 rest = rest[len(truncated) :]
         else:
