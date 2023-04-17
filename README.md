@@ -58,9 +58,9 @@ This repository is licensed under CC BY-NC 4.0. See [LICENSE](./LICENSE.md) for 
 
 ## References
 
-- For PDF translation, using [FuguMT](https://huggingface.co/staka/fugumt-en-ja) model from [HuggingFace](https://huggingface.co/).
-
 - For PDF to text conversion, using [PaddlePaddle](https://github.com/PaddlePaddle/PaddleOCR) model.
+
+- For text translation, using [FuguMT](https://huggingface.co/staka/fugumt-en-ja) model from [HuggingFace](https://huggingface.co/).
 
 - The docker image is based on [paddlepaddle/paddle](https://hub.docker.com/r/paddlepaddle/paddle/tags/).
 
