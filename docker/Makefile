@@ -14,3 +14,6 @@ run:
 		-d --restart=always \
 		-p 8765:8765 \
 		${NAME}:${TAG} /bin/bash
+
+translate:
+	cd ${PROJECT_DIRECTORY} && python3 translator.py
