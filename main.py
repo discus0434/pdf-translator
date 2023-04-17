@@ -1,7 +1,6 @@
 import copy
 import re
 import tempfile
-from io import BytesIO
 from pathlib import Path
 from typing import List, Tuple, Union
 
@@ -24,10 +23,32 @@ app = FastAPI()
 
 
 class InputPdf(BaseModel):
+    """Input PDF file."""
     input_pdf: UploadFile = Field(..., title="Input PDF file")
 
 
 class TranslateApi:
+    """Translator API class.
+
+    Attributes
+    ----------
+        app: FastAPI
+            FastAPI instance
+        temp_dir: tempfile.TemporaryDirectory
+            Temporary directory for storing translated PDF files
+        temp_dir_name: Path
+            Path to the temporary directory
+        font: ImageFont
+            Font for drawing text on the image
+        layout_model: PPStructure
+            Layout model for detecting text blocks
+        ocr_model: PaddleOCR
+            OCR model for detecting text in the text blocks
+        translate_model: MarianMTModel
+            Translation model for translating text
+        translate_tokenizer: MarianTokenizer
+            Tokenizer for the translation model
+    """
     DPI = 300
     FONT_SIZE = 36
 
@@ -50,9 +71,22 @@ class TranslateApi:
         self.temp_dir_name = Path(self.temp_dir.name)
 
     def run(self):
+        """Run the API server"""
         uvicorn.run(self.app, host="0.0.0.0", port=8765)
 
-    async def translate_pdf(self, input_pdf: UploadFile = File(...)):
+    async def translate_pdf(self, input_pdf: UploadFile = File(...)) -> FileResponse:
+        """API endpoint for translating PDF files.
+
+        Parameters
+        ----------
+            input_pdf: UploadFile
+                Input PDF file
+
+        Returns
+        -------
+            FileResponse
+                Translated PDF file
+        """
         input_pdf_data = await input_pdf.read()
         self._translate_pdf(input_pdf_data, self.temp_dir_name)
 
@@ -61,12 +95,33 @@ class TranslateApi:
         )
 
     async def clear_temp_dir(self):
+        """API endpoint for clearing the temporary directory."""
         self.temp_dir.cleanup()
         self.temp_dir = tempfile.TemporaryDirectory()
         self.temp_dir_name = Path(self.temp_dir.name)
         return {"message": "temp dir cleared"}
 
-    def _translate_pdf(self, pdf_path_or_bytes: Union[Path, bytes], output_dir: Path):
+    def _translate_pdf(self, pdf_path_or_bytes: Union[Path, bytes], output_dir: Path) -> None:
+        """Backend function for translating PDF files.
+
+        Translation is performed in the following steps:
+            1. Convert the PDF file to images
+            2. Detect text blocks in the images
+            3. For each text block, detect text and translate it
+            4. Draw the translated text on the image
+            5. Save the image as a PDF file
+            6. Merge all PDF files into one PDF file
+
+        At 3, this function does not translate the text after
+        the references section. Instead, saves the image as it is.
+
+        Parameters
+        ----------
+            pdf_path_or_bytes: Union[Path, bytes]
+                Path to the input PDF file or bytes of the input PDF file
+            output_dir: Path
+                Path to the output directory
+        """
         if isinstance(pdf_path_or_bytes, Path):
             pdf_images = convert_from_path(pdf_path_or_bytes, dpi=self.DPI)
         else:
@@ -97,6 +152,11 @@ class TranslateApi:
         self.__merge_pdfs(pdf_files)
 
     def __load_models(self):
+        """Backend function for loading models.
+
+        Called in the constructor.
+        Load the layout model, OCR model, translation model and font.
+        """
         self.font = ImageFont.truetype(
             "/home/SourceHanSerif-Light.otf",
             size=self.FONT_SIZE,
@@ -115,6 +175,26 @@ class TranslateApi:
         image: Image.Image,
         reached_references: bool,
     ) -> Tuple[np.ndarray, np.ndarray, bool]:
+        """Translate one page of the PDF file.
+
+        There are some heuristics to clean the results of translation:
+            1. Remove newlines, tabs, brackets, slashes, and pipes
+            2. Reject the result if there are few Japanese characters
+            3. Skip the translation if the text block has only one line
+
+        Parameters
+        ----------
+            image: Image.Image
+                Image of the page
+            reached_references: bool
+                Whether the references section has been reached.
+
+        Returns
+        -------
+            Tuple[np.ndarray, np.ndarray, bool]
+                Translated image, original image,
+                and whether the references section has been reached.
+        """
         img = np.array(image, dtype=np.uint8)
         original_img = copy.deepcopy(img)
         result = self.layout_model(img)
@@ -173,6 +253,21 @@ class TranslateApi:
         return img, original_img, reached_references
 
     def __translate(self, text: str) -> str:
+        """Translate text using the translation model.
+
+        If the text is too long, it will be truncated with
+        the last period, and the translation will be concatenated.
+
+        Parameters
+        ----------
+            text: str
+                Text to be translated.
+
+        Returns
+        -------
+            str
+                Translated text.
+        """
         if len(text) > 512:
             texts = []
             rest = text
@@ -200,7 +295,18 @@ class TranslateApi:
         print(translated_texts)
         return "".join(translated_texts)
 
-    def __merge_pdfs(self, pdf_files: List[str]):
+    def __merge_pdfs(self, pdf_files: List[str]) -> None:
+        """Merge translated PDF files into one file.
+
+        Merged file will be stored in the temp directory
+        as "translated.pdf".
+
+        Parameters
+        ----------
+            pdf_files: List[str]
+                List of paths to translated PDF files stored in
+                the temp directory.
+        """
         pdf_merger = PyPDF2.PdfMerger()
 
         for pdf_file in sorted(pdf_files):
