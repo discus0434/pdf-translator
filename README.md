@@ -51,7 +51,9 @@ The translated PDF files will be saved in `./outputs` directory.
 
 ## License
 
+ **This repository does not allow commercial use.**
 This repository is licensed under CC BY-NC 4.0. See [LICENSE](./LICENSE.md) for more information.
+
 
 ## References
 
@@ -61,7 +63,7 @@ This repository is licensed under CC BY-NC 4.0. See [LICENSE](./LICENSE.md) for 
 
 - The docker image is based on [paddlepaddle/paddle](https://hub.docker.com/r/paddlepaddle/paddle/tags/).
 
-- Font files are from [Source Han Serif](https://github.com/adobe-fonts/source-han-serif). **Due to the license, this repository does not allow commercial use.**
+- Font files are from [Source Han Serif](https://github.com/adobe-fonts/source-han-serif).
 
 ## TODOs
 
