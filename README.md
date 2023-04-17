@@ -29,7 +29,7 @@ This is a PDF translator that translates PDF files into Japanese.
 4. **Translate PDF files**
 
    ```bash
-   python translate.py -i /path/to/input_pdf
+   
    ```
 
    The translated PDF files will be saved in `./output` directory.
