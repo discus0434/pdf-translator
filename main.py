@@ -143,7 +143,7 @@ class TranslateApi:
                 plt.savefig(output_path, format="pdf", dpi=self.DPI)
                 plt.close(fig)
             else:
-                image.convert("RGB").save(output_path, format="pdf")
+                image.convert("RGB").resize((int(1400 / image.size[1] * image.size[0]), 1400)).save(output_path, format="pdf")
 
             pdf_files.append(str(output_path))
 
