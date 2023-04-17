@@ -16,7 +16,6 @@ from PIL import Image, ImageDraw, ImageFont
 from pydantic import BaseModel, Field
 from tqdm import tqdm
 from transformers import MarianMTModel, MarianTokenizer
-
 from utils import fw_fill
 
 
@@ -283,9 +282,12 @@ class TranslateApi:
             rest = text
             for i in range(int(len(text) / 448) + 1):
                 # truncate with last period
-                truncated = rest[: (i + 1) * 448].rsplit(".", 1)[0]
-                texts.append(truncated)
-                rest = rest[len(truncated) :]
+                if len(rest) > 448:
+                    truncated = rest[:448].rsplit(".", 1)[0]
+                    texts.append(truncated)
+                    rest = rest[len(truncated) :]
+                else:
+                    texts.append(rest)
         else:
             texts = [text]
 
