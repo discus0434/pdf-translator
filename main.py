@@ -19,8 +19,6 @@ from transformers import MarianMTModel, MarianTokenizer
 
 from utils import fw_fill
 
-app = FastAPI()
-
 
 class InputPdf(BaseModel):
     """Input PDF file."""
