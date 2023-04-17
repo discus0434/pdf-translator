@@ -51,7 +51,8 @@ The translated PDF files will be saved in `./outputs` directory.
 
 ## License
 
- **This repository does not allow commercial use.**
+**This repository does not allow commercial use.**
+ 
 This repository is licensed under CC BY-NC 4.0. See [LICENSE](./LICENSE.md) for more information.
 
 
