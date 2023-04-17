@@ -6,37 +6,46 @@ This is a PDF translator that translates PDF files into Japanese.
   <img src="./assets/sample1.png" width=100%>
 </p>
 
-## How to use
+## Features
+
+**Translate PDF files (e.g. paper) into Japanese**.
+
+  This repository translates PDF files into Japanese using [FuguMT](https://huggingface.co/staka/fugumt-en-ja) model from [HuggingFace](https://huggingface.co/). The translated PDF files are saved in `./outputs` directory.
+
+  To speed up the translation process, **translation is performed until "References" section in the PDF file**. After that, the rest of the page is copied as it is.
+
+## Installation
 
 1. **Clone this repository**
 
    ```bash
-   git clone https://github.com/discus0434/pdf-translator.git
+    git clone https://github.com/discus0434/pdf-translator.git
+    cd pdf-translator/docker
    ```
 
-2. **Build the docker image**
+2. **Build the docker image via Makefile**
 
    ```bash
-   cd pdf-translator/docker && make build
+    make build
    ```
 
-3. **Run the docker container**
+3. **Run the docker container via Makefile**
 
    ```bash
-   make run
+    make run
    ```
 
-4. **Translate PDF files**
+## Usage
 
    ```bash
-   
+    cd pdf-translator/docker && make translate INPUT="path/to/input.pdf"
    ```
 
-   The translated PDF files will be saved in `./output` directory.
+   The translated PDF files will be saved in `./outputs` directory.
 
 ## Requirements
 
-- NVIDIA GPU + CUDA (currently only support NVIDIA GPU)
+- NVIDIA GPU + CUDA **(currently only support NVIDIA GPU)**
 - Docker
 - Python 3+
 
