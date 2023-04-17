@@ -13,7 +13,8 @@ run:
 		--gpus all \
 		-d --restart=always \
 		-p 8765:8765 \
-		${NAME}:${TAG} /bin/bash
+		${NAME}:${TAG} /bin/bash -c "python3 main.py"
 
 translate:
-	@cd ${PROJECT_DIRECTORY} && python3 translator.py -i ${INPUT}
+	@cd ${PROJECT_DIRECTORY} && \
+		python3 translator.py -i ${INPUT}
