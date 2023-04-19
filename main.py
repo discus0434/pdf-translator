@@ -277,22 +277,7 @@ class TranslateApi:
             str
                 Translated text.
         """
-        if len(text) > 448:
-            texts = []
-            rest = text
-            for i in range(int(len(text) / 448) + 1):
-                # truncate with last period
-                if len(rest) > 448 and i != int(len(text) / 448):
-                    if "." in rest[:448]:
-                        truncated = rest[:448].rsplit(".", 1)[0]
-                    else:
-                        truncated = rest[:448]
-                    texts.append(truncated)
-                    rest = rest[len(truncated) :]
-                else:
-                    texts.append(rest)
-        else:
-            texts = [text]
+        texts = self.__split_text(text, 448)
 
         translated_texts = []
         for i, t in enumerate(texts):
@@ -309,6 +294,28 @@ class TranslateApi:
             translated_texts.append(res)
         print(translated_texts)
         return "".join(translated_texts)
+
+    def __split_text(self, text, text_limit):
+        """Split text into chunks of sentences within text_limit"""
+        if len(text) < text_limit:
+            return [text]
+
+        sentences = text.rstrip().split(". ")
+        sentences = [s + ". " for s in sentences[:-1]] + sentences[-1:]
+        result = []
+        current_text = ""
+        for sentence in sentences:
+            if len(current_text) + len(sentence) < text_limit:
+                current_text += sentence
+            else:
+                result.append(current_text)
+                while len(sentence) >= text_limit:
+                    result.append(sentence[:text_limit - 1])
+                    sentence = sentence[text_limit:]
+                current_text = sentence
+        if current_text:
+            result.append(current_text)
+        return result
 
     def __merge_pdfs(self, pdf_files: List[str]) -> None:
         """Merge translated PDF files into one file.
