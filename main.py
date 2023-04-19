@@ -308,10 +308,12 @@ class TranslateApi:
             if len(current_text) + len(sentence) < text_limit:
                 current_text += sentence
             else:
-                result.append(current_text)
+                if current_text:
+                    result.append(current_text)
                 while len(sentence) >= text_limit:
+                    # better to look for a white space at least?
                     result.append(sentence[:text_limit - 1])
-                    sentence = sentence[text_limit:]
+                    sentence = sentence[text_limit - 1:].lstrip()
                 current_text = sentence
         if current_text:
             result.append(current_text)
