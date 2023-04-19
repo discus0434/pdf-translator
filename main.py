@@ -264,8 +264,8 @@ class TranslateApi:
     def __translate(self, text: str) -> str:
         """Translate text using the translation model.
 
-        If the text is too long, it will be truncated with
-        the last period, and the translation will be concatenated.
+        If the text is too long, it will be splited with
+        the heuristic that each sentence should be within 448 characters.
 
         Parameters
         ----------
@@ -295,8 +295,22 @@ class TranslateApi:
         print(translated_texts)
         return "".join(translated_texts)
 
-    def __split_text(self, text, text_limit):
-        """Split text into chunks of sentences within text_limit"""
+    def __split_text(self, text: str, text_limit: int = 448) -> List[str]:
+        """Split text into chunks of sentences within text_limit.
+
+        Parameters
+        ----------
+            text: str
+                Text to be split.
+            text_limit: int
+                Maximum length of each chunk. Defaults to 448.
+
+        Returns
+        -------
+            List[str]
+                List of text chunks,
+                each of which is shorter than text_limit.
+        """
         if len(text) < text_limit:
             return [text]
 
