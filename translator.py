@@ -58,7 +58,7 @@ if __name__ == "__main__":
         if not input_pdf_paths:
             raise ValueError(f"Input directory is empty: {args.input_pdf_path_or_dir}")
 
-        for input_pdf_path in args.input_pdf_path_or_dir.glob("*.pdf"):
+        for input_pdf_path in input_pdf_paths:
             translate_request(input_pdf_path, args.output_dir)
     else:
         raise ValueError(
