@@ -38,7 +38,7 @@ This repository contains some unsolved issues. Pull requests for improvements ar
 ## Usage
 
 ```bash
-   cd pdf-translator/docker && make translate INPUT="path/to/input_pdf_or_pdf_dir.pdf"
+   cd pdf-translator/docker && make translate INPUT="path/to/input_pdf_path_or_dir"
 ```
 
 You can throw a PDF file or a directory containing PDF files.
