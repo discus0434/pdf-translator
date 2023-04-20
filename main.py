@@ -29,22 +29,22 @@ class TranslateApi:
 
     Attributes
     ----------
-        app: FastAPI
-            FastAPI instance
-        temp_dir: tempfile.TemporaryDirectory
-            Temporary directory for storing translated PDF files
-        temp_dir_name: Path
-            Path to the temporary directory
-        font: ImageFont
-            Font for drawing text on the image
-        layout_model: PPStructure
-            Layout model for detecting text blocks
-        ocr_model: PaddleOCR
-            OCR model for detecting text in the text blocks
-        translate_model: MarianMTModel
-            Translation model for translating text
-        translate_tokenizer: MarianTokenizer
-            Tokenizer for the translation model
+    app: FastAPI
+        FastAPI instance
+    temp_dir: tempfile.TemporaryDirectory
+        Temporary directory for storing translated PDF files
+    temp_dir_name: Path
+        Path to the temporary directory
+    font: ImageFont
+        Font for drawing text on the image
+    layout_model: PPStructure
+        Layout model for detecting text blocks
+    ocr_model: PaddleOCR
+        OCR model for detecting text in the text blocks
+    translate_model: MarianMTModel
+        Translation model for translating text
+    translate_tokenizer: MarianTokenizer
+        Tokenizer for the translation model
     """
     DPI = 300
     FONT_SIZE = 36
@@ -76,13 +76,13 @@ class TranslateApi:
 
         Parameters
         ----------
-            input_pdf: UploadFile
-                Input PDF file
+        input_pdf: UploadFile
+            Input PDF file
 
         Returns
         -------
-            FileResponse
-                Translated PDF file
+        FileResponse
+            Translated PDF file
         """
         input_pdf_data = await input_pdf.read()
         self._translate_pdf(input_pdf_data, self.temp_dir_name)
@@ -114,10 +114,10 @@ class TranslateApi:
 
         Parameters
         ----------
-            pdf_path_or_bytes: Union[Path, bytes]
-                Path to the input PDF file or bytes of the input PDF file
-            output_dir: Path
-                Path to the output directory
+        pdf_path_or_bytes: Union[Path, bytes]
+            Path to the input PDF file or bytes of the input PDF file
+        output_dir: Path
+            Path to the output directory
         """
         if isinstance(pdf_path_or_bytes, Path):
             pdf_images = convert_from_path(pdf_path_or_bytes, dpi=self.DPI)
@@ -185,16 +185,16 @@ class TranslateApi:
 
         Parameters
         ----------
-            image: Image.Image
-                Image of the page
-            reached_references: bool
-                Whether the references section has been reached.
+        image: Image.Image
+            Image of the page
+        reached_references: bool
+            Whether the references section has been reached.
 
         Returns
         -------
-            Tuple[np.ndarray, np.ndarray, bool]
-                Translated image, original image,
-                and whether the references section has been reached.
+        Tuple[np.ndarray, np.ndarray, bool]
+            Translated image, original image,
+            and whether the references section has been reached.
         """
         img = np.array(image, dtype=np.uint8)
         original_img = copy.deepcopy(img)
@@ -269,13 +269,13 @@ class TranslateApi:
 
         Parameters
         ----------
-            text: str
-                Text to be translated.
+        text: str
+            Text to be translated.
 
         Returns
         -------
-            str
-                Translated text.
+        str
+            Translated text.
         """
         texts = self.__split_text(text, 448)
 
@@ -300,16 +300,16 @@ class TranslateApi:
 
         Parameters
         ----------
-            text: str
-                Text to be split.
-            text_limit: int
-                Maximum length of each chunk. Defaults to 448.
+        text: str
+            Text to be split.
+        text_limit: int
+            Maximum length of each chunk. Defaults to 448.
 
         Returns
         -------
-            List[str]
-                List of text chunks,
-                each of which is shorter than text_limit.
+        List[str]
+            List of text chunks,
+            each of which is shorter than text_limit.
         """
         if len(text) < text_limit:
             return [text]
@@ -341,9 +341,9 @@ class TranslateApi:
 
         Parameters
         ----------
-            pdf_files: List[str]
-                List of paths to translated PDF files stored in
-                the temp directory.
+        pdf_files: List[str]
+            List of paths to translated PDF files stored in
+            the temp directory.
         """
         pdf_merger = PyPDF2.PdfMerger()
 

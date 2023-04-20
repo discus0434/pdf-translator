@@ -19,10 +19,15 @@ def translate_request(input_pdf_path: Path, output_dir: Path) -> None:
 
     Parameters
     ----------
-        input_pdf_path : Path
-            Path to the PDF to be translated.
-        output_dir : Path
-            Path to the directory where the translated PDF will be saved.
+    input_pdf_path : Path
+        Path to the PDF to be translated.
+    output_dir : Path
+        Path to the directory where the translated PDF will be saved.
+
+    Raises
+    ------
+    ValueError
+        If the input path is not a valid path to file or directory.
     """
     print(f"Translating {input_pdf_path}...")
     with open(input_pdf_path, "rb") as input_pdf:
@@ -48,9 +53,16 @@ if __name__ == "__main__":
     if args.input_pdf_path_or_dir.is_file():
         translate_request(args.input_pdf_path_or_dir, args.output_dir)
     elif args.input_pdf_path_or_dir.is_dir():
+        input_pdf_paths = args.input_pdf_path_or_dir.glob("*.pdf")
+
+        if not input_pdf_paths:
+            raise ValueError(f"Input directory is empty: {args.input_pdf_path_or_dir}")
+
         for input_pdf_path in args.input_pdf_path_or_dir.glob("*.pdf"):
             translate_request(input_pdf_path, args.output_dir)
     else:
-        raise ValueError("Input path must be a file or directory.")
+        raise ValueError(
+            f"Input path must be a file or directory: {args.input_pdf_path_or_dir}"
+        )
 
     print("Done.")
