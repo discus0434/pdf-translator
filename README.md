@@ -76,5 +76,5 @@ This repository is licensed under CC BY-NC 4.0. See [LICENSE](./LICENSE.md) for 
 
 Thanks to the following people who have contributed to this project:
 
-- [Akira Ishino](https://github.com/stn): Improvements on text trunction algorithm
+- [Akira Ishino](https://github.com/stn): Improvements on text truncation algorithm
 - [hibit](https://github.com/hibit-at): Implementation of directory input to `translator.py`
