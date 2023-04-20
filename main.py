@@ -47,7 +47,7 @@ class TranslateApi:
         Tokenizer for the translation model
     """
     DPI = 300
-    FONT_SIZE = 36
+    FONT_SIZE = 32
 
     def __init__(self):
         self.app = FastAPI()
