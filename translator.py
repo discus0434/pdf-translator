@@ -1,40 +1,56 @@
 import argparse
-import requests
+import subprocess
 from pathlib import Path
-import glob
+
+# if import requests fails, try pip install requests
+try:
+    import requests
+except Exception:
+    subprocess.check_call(["python3", "-m", "pip", "install", "requests"])
+    import requests
+
+
+TRANSLATE_URL = "http://localhost:8765/translate_pdf/"
+CLEAR_TEMP_URL = "http://localhost:8765/clear_temp_dir/"
+
+
+def translate_request(input_pdf_path: Path, output_dir: Path) -> None:
+    """Sends a POST request to the translator server to translate a PDF.
+
+    Parameters
+    ----------
+        input_pdf_path : Path
+            Path to the PDF to be translated.
+        output_dir : Path
+            Path to the directory where the translated PDF will be saved.
+    """
+    print(f"Translating {input_pdf_path}...")
+    with open(input_pdf_path, "rb") as input_pdf:
+        response = requests.post(TRANSLATE_URL, files={"input_pdf": input_pdf})
+
+    if response.status_code == 200:
+        with open(output_dir / input_pdf_path.name, "wb") as output_pdf:
+            output_pdf.write(response.content)
+        print(f"Converted PDF saved to {output_dir / input_pdf_path.name}")
+        requests.get(CLEAR_TEMP_URL)
+    else:
+        print(f"An error occurred: {response.status_code}")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--input_pdf_path", type=Path)
+    parser.add_argument("-i", "--input_pdf_path_or_dir", type=Path, required=True)
     parser.add_argument("-o", "--output_dir", type=Path, default="./outputs")
-    parser.add_argument("-f", "--folder_mode", action="store_true")
     args = parser.parse_args()
-
-    translate_url = "http://localhost:8765/translate_pdf/"
-    clear_temp_url = "http://localhost:8765/clear_temp_dir/"
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
-    def translate_pdf(input_path, output_dir):
-        with open(input_path, "rb") as input_pdf:
-            response = requests.post(translate_url, files={"input_pdf": input_pdf})
-
-        if response.status_code == 200:
-            with open(output_dir / input_path.name, "wb") as output_pdf:
-                output_pdf.write(response.content)
-            print(f"Converted PDF saved to {output_dir / input_path.name}")
-            requests.get(clear_temp_url)
-        else:
-            print(f"An error occurred: {response.status_code}")
-
-    if args.folder_mode:
-        input_dir = Path("./inputs")
-        pdf_files = glob.glob(f"{input_dir}/*.pdf")
-
-        for pdf_file in pdf_files:
-            input_path = Path(pdf_file)
-            translate_pdf(input_path, args.output_dir)
-    elif args.input_pdf_path:
-        translate_pdf(args.input_pdf_path, args.output_dir)
+    if args.input_pdf_path_or_dir.is_file():
+        translate_request(args.input_pdf_path_or_dir, args.output_dir)
+    elif args.input_pdf_path_or_dir.is_dir():
+        for input_pdf_path in args.input_pdf_path_or_dir.glob("*.pdf"):
+            translate_request(input_pdf_path, args.output_dir)
     else:
-        print("Please provide either --input_pdf_path or --folder_mode options.")
+        raise ValueError("Input path must be a file or directory.")
+
+    print("Done.")
