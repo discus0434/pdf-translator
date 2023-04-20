@@ -1,7 +1,5 @@
 # PDF Translator EN-JA
 
-
-
 <p align="center">
   <img src="./assets/sample1.png" width=100%>
 </p>
@@ -58,7 +56,6 @@ The translated PDF files will be saved in `./outputs` directory.
 
 This repository is licensed under CC BY-NC 4.0. See [LICENSE](./LICENSE.md) for more information.
 
-
 ## References
 
 - For PDF to text conversion, using [PaddlePaddle](https://github.com/PaddlePaddle/PaddleOCR) model.
@@ -74,3 +71,10 @@ This repository is licensed under CC BY-NC 4.0. See [LICENSE](./LICENSE.md) for 
 - [ ] Make possible to highlight the translated text
 - [ ] Support M1 Mac or CPU
 - [ ] Implement Gradio UI
+
+## Contributors
+
+Thanks to the following people who have contributed to this project:
+
+- [Akira Ishino](https://github.com/stn): Improvements on text trunction algorithm
+- [hibit](https://github.com/hibit-at): Implementation of directory input to `translator.py`
