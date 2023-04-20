@@ -38,10 +38,11 @@ This repository contains some unsolved issues. Pull requests for improvements ar
 ## Usage
 
 ```bash
-   cd pdf-translator/docker && make translate INPUT="path/to/input_pdf_path_or_dir"
+   cd pdf-translator/docker && make translate INPUT="path/to/input_pdf_or_dir"
 ```
 
 You can throw a PDF file or a directory containing PDF files.
+
 The translated PDF files will be saved in `./outputs` directory.
 
 ## Requirements
