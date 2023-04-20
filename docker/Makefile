@@ -18,3 +18,7 @@ run:
 translate:
 	@cd ${PROJECT_DIRECTORY} && \
 		python3 translator.py -i ${INPUT}
+
+folder-translate:
+	@cd ${PROJECT_DIRECTORY} && \
+		python3 translator.py -f
