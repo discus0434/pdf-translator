@@ -51,6 +51,11 @@ if __name__ == "__main__":
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
     if args.input_pdf_path_or_dir.is_file():
+        if args.input_pdf_path_or_dir.suffix != ".pdf":
+            raise ValueError(
+                f"Input file must be a PDF or directory: {args.input_pdf_path_or_dir}"
+            )
+
         translate_request(args.input_pdf_path_or_dir, args.output_dir)
     elif args.input_pdf_path_or_dir.is_dir():
         input_pdf_paths = args.input_pdf_path_or_dir.glob("*.pdf")
