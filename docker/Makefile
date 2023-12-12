@@ -13,7 +13,7 @@ run:
 		--gpus all \
 		-d --restart=always \
 		-p 8765:8765 \
-		-p 7860:7860 \
+		-p 8288:8288 \
 		${NAME}:${TAG} /bin/bash -c "chmod +x /app/docker/start.sh && /app/docker/start.sh"
 
 run-bash:
@@ -24,7 +24,7 @@ run-bash:
 		--gpus all \
 		-d --restart=always \
 		-p 8765:8765 \
-		-p 7860:7860 \
+		-p 8288:8288 \
 		${NAME}:${TAG} /bin/bash
 
 translate:
