@@ -72,6 +72,8 @@ This repository is licensed under CC BY-NC 4.0. See [LICENSE](./LICENSE.md) for 
 
 ## References
 
+- For PDF layout analysis, using [Unilm](https://github.com/microsoft/unilm).
+
 - For PDF to text conversion, using [PaddlePaddle](https://github.com/PaddlePaddle/PaddleOCR) model.
 
 - For text translation, using [FuguMT](https://huggingface.co/staka/fugumt-en-ja) model from [HuggingFace](https://huggingface.co/).
@@ -84,7 +86,6 @@ This repository is licensed under CC BY-NC 4.0. See [LICENSE](./LICENSE.md) for 
 
 - [ ] Make possible to highlight the translated text
 - [ ] Support M1 Mac or CPU
-- [ ] Implement Gradio UI
 
 ## Contributors
 
