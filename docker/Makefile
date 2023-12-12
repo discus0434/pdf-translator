@@ -9,11 +9,21 @@ run:
 	docker run -it \
 		--runtime=nvidia \
 		--name pdf-translator \
-		-v ${PROJECT_DIRECTORY}:/home/${NAME} \
+		-v ${PROJECT_DIRECTORY}:/app \
 		--gpus all \
 		-d --restart=always \
 		-p 8765:8765 \
-		${NAME}:${TAG} /bin/bash -c "python3 main.py"
+		${NAME}:${TAG} /bin/bash -c "chmod +x /app/start.sh && /app/start.sh"
+
+run-bash:
+	docker run -it \
+		--runtime=nvidia \
+		--name pdf-translator \
+		-v ${PROJECT_DIRECTORY}:/app \
+		--gpus all \
+		-d --restart=always \
+		-p 8765:8765 \
+		${NAME}:${TAG} /bin/bash
 
 translate:
 	@cd ${PROJECT_DIRECTORY} && \

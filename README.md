@@ -35,7 +35,15 @@ This repository contains some unsolved issues. Pull requests for improvements ar
    make run
 ```
 
-## Usage
+## GUI Usage
+
+Access to GUI via browser.
+
+```bash
+   http://localhost:7860
+```
+
+## CLI Usage
 
 ```bash
    cd pdf-translator/docker && make translate INPUT="path/to/input_pdf_or_dir"
@@ -49,7 +57,6 @@ The translated PDF files will be saved in `./outputs` directory.
 
 - NVIDIA GPU **(currently only support NVIDIA GPU)**
 - Docker
-- Python 3+
 
 ## License
 

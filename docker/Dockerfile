@@ -1,7 +1,9 @@
-FROM paddlepaddle/paddle:2.4.1-gpu-cuda11.2-cudnn8.2-trt8.0
+FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04
 
-ENV DEBIAN_FRONTEND=noninteractive
-ENV DEBCONF_NOWARNINGS=yes
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_PREFER_BINARY=1 \
+    CUDA_HOME=/usr/local/cuda-11.8 \
+    DEBCONF_NOWARNINGS=yes
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
 RUN apt-get update \
@@ -9,26 +11,46 @@ RUN apt-get update \
     && apt-get install -y \
         poppler-utils \
         libpoppler-dev \
-        wget git \
+        wget \
+        curl \
+        git \
+        python3-dev \
+        python3-pip \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /tmp/* /var/tmp/* \
-    && mkdir -p /home/pdf-translator
+    && rm -rf /tmp/* /var/tmp/*
 
-WORKDIR /home/pdf-translator
+WORKDIR /app
 
-RUN pip install --no-cache-dir opencv-python-headless \
-    networkx \
-    transformers \
-    sentencepiece \
-    paddleocr \
-    pdf2image \
-    fastapi[uvicorn] \
-    PyPDF2 \
-    matplotlib \
-    && pip install --no-cache-dir torch==1.12.1+cu113 \
-    torchvision==0.13.1+cu113 \
-    torchaudio==0.12.1+cu113 \
-    -f https://download.pytorch.org/whl/cu113/torch_stable.html
+RUN pip install \
+        torch \
+        torchvision \
+        --index-url https://download.pytorch.org/whl/cu118 \
+    && pip install opencv-python-headless \
+        networkx \
+        transformers==4.30 \
+        sentencepiece \
+        pdf2image \
+        fastapi[uvicorn] \
+        uvicorn \
+        PyPDF2 \
+        matplotlib \
+        timm \
+        scipy \
+        shapely \
+        pyclipper \
+        scikit-image \
+        python-multipart \
+        onnxruntime \
+        requests \
+        gradio
 
-RUN wget https://github.com/adobe-fonts/source-han-serif/raw/release/OTF/Japanese/SourceHanSerif-Light.otf -P /home/
+RUN pip install \
+        "git+https://github.com/facebookresearch/detectron2.git"
+
+RUN git clone https://github.com/microsoft/unilm.git /unilm \
+        && sed -i 's/from collections import Iterable/from collections.abc import Iterable/' \
+        /unilm/dit/object_detection/ditod/table_evaluation/data_structure.py
+
+RUN wget https://github.com/adobe-fonts/source-han-serif/raw/release/OTF/Japanese/SourceHanSerif-Light.otf -P /app/models \
+        && wget https://layoutlm.blob.core.windows.net/dit/dit-fts/publaynet_dit-b_cascade.pth?sv=2022-11-02&ss=b&srt=o&sp=r&se=2033-06-08T16:48:15Z&st=2023-06-08T08:48:15Z&spr=https&sig=a9VXrihTzbWyVfaIDlIT1Z0FoR1073VB0RLQUMuudD4%3D -O /app/models/unilm/publaynet_dit-b_cascade.pth
