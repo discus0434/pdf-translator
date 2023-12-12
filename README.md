@@ -40,13 +40,13 @@ This repository contains some unsolved issues. Pull requests for improvements ar
 Access to GUI via browser.
 
 ```bash
-   http://localhost:7860
+http://localhost:7860
 ```
 
 ## CLI Usage
 
 ```bash
-   cd pdf-translator/docker && make translate INPUT="path/to/input_pdf_or_dir"
+cd pdf-translator/docker && make translate INPUT="path/to/input_pdf_or_dir"
 ```
 
 You can throw a PDF file or a directory containing PDF files.
