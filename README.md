@@ -1,16 +1,22 @@
 # PDF Translator EN-JA
 
 <p align="center">
-  <img src="./assets/sample1.png" width=100%>
+  <img src="./assets/example.png" width=70%>
+</p>
+
+<h5 align="center">
+  This repository offers an WebUI and API endpoint that translates English PDF files into Japanese, preserving the original layout.
+</h5>
+
+<p align="center">
+  <img src="./assets/example.gif" width=70%>
 </p>
 
 ## Features
 
-This repository offers an API endpoint that translates English PDF files into Japanese, preserving the original layout. If you use `translator.py`, The translated PDF files are saved in `./outputs` directory.
+To be more readable, the translated PDF file displays the original PDF page in the left side and the translated text in the right side (see the image above).
 
 To speed up the translation process, **translation is performed until "References" section in the PDF file**. After that, the rest of the page is copied as it is.
-
-To be more readable, the translated PDF file displays the original PDF page in the left side and the translated text in the right side (see the image above).
 
 This repository contains some unsolved issues. Pull requests for improvements are always welcome.
 
