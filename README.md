@@ -46,7 +46,7 @@ This repository contains some unsolved issues. Pull requests for improvements ar
 Access to GUI via browser.
 
 ```bash
-http://localhost:7860
+http://localhost:8288
 ```
 
 ## CLI Usage
