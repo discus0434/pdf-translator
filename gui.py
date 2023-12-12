@@ -56,4 +56,4 @@ if __name__ == "__main__":
                     outputs=[translated_file, pdf_images],
                 )
 
-        demo.queue().launch()
+        demo.queue().launch(server_name="0.0.0.0", port=8288)
