@@ -29,4 +29,4 @@ run-bash:
 
 translate:
 	@cd ${PROJECT_DIRECTORY} && \
-		python3 translator.py -i ${INPUT}
+		python3 cli.py -i ${INPUT}
