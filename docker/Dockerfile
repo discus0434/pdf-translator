@@ -20,7 +20,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /tmp/* /var/tmp/*
 
-WORKDIR /app
+WORKDIR /resources
 
 RUN pip install \
         torch \
@@ -52,6 +52,6 @@ RUN git clone https://github.com/microsoft/unilm.git /unilm \
         && sed -i 's/from collections import Iterable/from collections.abc import Iterable/' \
         /unilm/dit/object_detection/ditod/table_evaluation/data_structure.py
 
-RUN wget https://github.com/adobe-fonts/source-han-serif/raw/release/OTF/Japanese/SourceHanSerif-Light.otf -P /app/models \
-        && mkdir -p /app/models/unilm \
-        && wget "https://layoutlm.blob.core.windows.net/dit/dit-fts/publaynet_dit-b_cascade.pth?sv=2022-11-02&ss=b&srt=o&sp=r&se=2033-06-08T16:48:15Z&st=2023-06-08T08:48:15Z&spr=https&sig=a9VXrihTzbWyVfaIDlIT1Z0FoR1073VB0RLQUMuudD4%3D" -P /app/models/unilm
+RUN wget https://github.com/adobe-fonts/source-han-serif/raw/release/OTF/Japanese/SourceHanSerif-Light.otf -P /resources/models \
+        && mkdir -p /resources/models/unilm \
+        && wget "https://huggingface.co/discus0434/publaynet-dit-base/resolve/main/publaynet_dit-b_cascade.pth" -P /resources/models/unilm

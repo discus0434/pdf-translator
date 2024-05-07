@@ -55,7 +55,7 @@ class TranslateApi:
     DPI = 200
     FONT_SIZE = 21
 
-    def __init__(self, model_root_dir: Path = Path("/app/models/")):
+    def __init__(self, model_root_dir: Path = Path("/resources/models/")):
         self.app = FastAPI()
         self.app.add_api_route(
             "/translate_pdf/",
