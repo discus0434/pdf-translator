@@ -1,14 +1,17 @@
 import copy
+import os
 import re
 import sys
 import tempfile
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Tuple, Union
+from typing import List, Literal, Tuple, Union
 
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import PyPDF2
+import torch
 import uvicorn
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import FileResponse
@@ -20,7 +23,23 @@ from transformers import MarianMTModel, MarianTokenizer
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from utils import LayoutAnalyzer, OCRModel, fw_fill
+from utils import OCRModel, fw_fill
+
+
+@dataclass
+class LayoutRegion:
+    type: Literal["text", "title", "list", "table", "figure"]
+    bbox: tuple[int, int, int, int]
+    score: float
+    image: np.ndarray = field(init=False)
+
+
+class FullPageLayoutAnalyzer:
+    def __call__(self, image: np.ndarray) -> list[LayoutRegion]:
+        height, width = image.shape[:2]
+        layout = LayoutRegion(type="text", bbox=(0, 0, width, height), score=1.0)
+        layout.image = image
+        return [layout]
 
 
 class InputPdf(BaseModel):
@@ -69,7 +88,11 @@ class TranslateApi:
             methods=["GET"],
         )
 
-        self.__load_models(model_root_dir)
+        self.__load_models(
+            model_root_dir,
+            device=os.getenv("PDF_TRANSLATOR_DEVICE", "auto"),
+            layout_backend=os.getenv("PDF_TRANSLATOR_LAYOUT_BACKEND", "auto"),
+        )
         self.temp_dir = tempfile.TemporaryDirectory()
         self.temp_dir_name = Path(self.temp_dir.name)
 
@@ -160,7 +183,69 @@ class TranslateApi:
 
         self.__merge_pdfs(pdf_files)
 
-    def __load_models(self, model_root_dir: Path, device: str = "cuda"):
+    def __resolve_device(self, device: str) -> str:
+        requested_device = device.lower()
+        if requested_device not in {"auto", "cuda", "mps", "cpu"}:
+            raise ValueError(
+                f"Unsupported device: {device}. Use one of auto/cuda/mps/cpu."
+            )
+
+        if requested_device == "auto":
+            if torch.cuda.is_available():
+                return "cuda"
+            if torch.backends.mps.is_available() and torch.backends.mps.is_built():
+                return "mps"
+            return "cpu"
+
+        if requested_device == "cuda" and not torch.cuda.is_available():
+            print("CUDA is not available. Falling back to CPU.")
+            return "cpu"
+
+        if requested_device == "mps" and not (
+            torch.backends.mps.is_available() and torch.backends.mps.is_built()
+        ):
+            print("MPS is not available. Falling back to CPU.")
+            return "cpu"
+
+        return requested_device
+
+    def __load_layout_model(
+        self,
+        model_root_dir: Path,
+        device: str,
+        layout_backend: str,
+    ):
+        backend = layout_backend.lower()
+        if backend not in {"auto", "detectron2", "none"}:
+            raise ValueError(
+                "Unsupported layout backend. Use one of auto/detectron2/none."
+            )
+
+        if backend == "none":
+            print("Using full-page layout fallback backend.")
+            return FullPageLayoutAnalyzer()
+
+        try:
+            from utils.layout_model import LayoutAnalyzer
+
+            return LayoutAnalyzer(model_root_dir=model_root_dir, device=device)
+        except Exception as error:
+            if backend == "detectron2":
+                raise RuntimeError(
+                    "Detectron2 layout backend was requested but failed to load."
+                ) from error
+            print(
+                "Detectron2 layout backend unavailable. "
+                "Falling back to full-page layout mode."
+            )
+            return FullPageLayoutAnalyzer()
+
+    def __load_models(
+        self,
+        model_root_dir: Path,
+        device: str = "auto",
+        layout_backend: str = "auto",
+    ):
         """Backend function for loading models.
 
         Called in the constructor.
@@ -171,24 +256,34 @@ class TranslateApi:
         model_root_dir: Path
             Path to the directory containing the models.
         device: str
-            Device to use for the layout model.
-            Defaults to "cuda".
+            Device to use for model execution.
+            Defaults to "auto".
+        layout_backend: str
+            Layout backend to use.
+            Defaults to "auto".
         """
         self.font = ImageFont.truetype(
             str(model_root_dir / "SourceHanSerif-Light.otf"),
             size=self.FONT_SIZE,
         )
-        self.device = device
+        self.device = self.__resolve_device(device)
+        self.translation_device = "cuda" if self.device == "cuda" else "cpu"
 
-        self.layout_model = LayoutAnalyzer(
-            model_root_dir=model_root_dir / "unilm", device=self.device
+        self.layout_model = self.__load_layout_model(
+            model_root_dir=model_root_dir / "unilm",
+            device="cuda" if self.device == "cuda" else "cpu",
+            layout_backend=layout_backend,
+        )
+        self.use_full_page_fallback = isinstance(
+            self.layout_model, FullPageLayoutAnalyzer
         )
         self.ocr_model = OCRModel(
-            model_root_dir=model_root_dir / "paddle-ocr", device=self.device
+            model_root_dir=model_root_dir / "paddle-ocr",
+            device="cuda" if self.device == "cuda" else "cpu",
         )
 
         self.translate_model = MarianMTModel.from_pretrained("staka/fugumt-en-ja").to(
-            self.device
+            self.translation_device
         )
         self.translate_tokenizer = MarianTokenizer.from_pretrained("staka/fugumt-en-ja")
 
@@ -219,65 +314,124 @@ class TranslateApi:
         """
         img = np.array(image, dtype=np.uint8)
         original_img = copy.deepcopy(img)
+
+        if self.use_full_page_fallback:
+            return self.__translate_one_page_with_ocr_boxes(
+                img=img,
+                original_img=original_img,
+                reached_references=reached_references,
+            )
+
         result = self.layout_model(cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
         for line in result:
-            if line.type in ["text", "list"]:
-                ocr_results = list(map(lambda x: x[0], self.ocr_model(line.image)[1]))
-
-                if len(ocr_results) > 1:
-                    text = " ".join(ocr_results)
-                    text = re.sub(r"\n|\t|\[|\]|\/|\|", " ", text)
-                    translated_text = self.__translate(text)
-
-                    # if almost all characters in translated text are not japanese characters, skip
-                    if len(
-                        re.findall(
-                            r"[^\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u3400-\u4DBF]",
-                            translated_text,
-                        )
-                    ) > 0.8 * len(translated_text):
-                        print("skipped")
-                        continue
-
-                    # if text is too short, skip
-                    if len(translated_text) < 20:
-                        print("skipped")
-                        continue
-
-                    processed_text = fw_fill(
-                        translated_text,
-                        width=int((line.bbox[2] - line.bbox[0]) / (self.FONT_SIZE / 2))
-                        - 1,
-                    )
-                    print(processed_text)
-
-                    new_block = Image.new(
-                        "RGB",
-                        (
-                            line.bbox[2] - line.bbox[0],
-                            line.bbox[3] - line.bbox[1],
-                        ),
-                        color=(255, 255, 255),
-                    )
-                    draw = ImageDraw.Draw(new_block)
-                    draw.text(
-                        (0, 0),
-                        text=processed_text,
-                        font=self.font,
-                        fill=(0, 0, 0),
-                    )
-                    new_block = np.array(new_block)
-                    img[
-                        int(line.bbox[1]) : int(line.bbox[3]),
-                        int(line.bbox[0]) : int(line.bbox[2]),
-                    ] = new_block
-            elif line.type == "title":
-                try:
-                    title = self.ocr_model(line.image)[1][0][0]
-                except IndexError:
+            if line.type in ["text", "list", "title"]:
+                ocr_output = self.ocr_model(line.image)
+                if ocr_output is None or ocr_output[1] is None:
                     continue
-                if title.lower() == "references" or title.lower() == "reference":
+
+                ocr_results = [result[0].strip() for result in ocr_output[1] if result]
+                ocr_results = [result for result in ocr_results if result]
+                if not ocr_results:
+                    continue
+
+                text = " ".join(ocr_results)
+                text = re.sub(r"\n|\t|\[|\]|\/|\|", " ", text).strip()
+                if not text:
+                    continue
+
+                if text.lower() in ["references", "reference"]:
                     reached_references = True
+                    continue
+
+                translated_text = self.__translate(text)
+                if not translated_text:
+                    continue
+
+                processed_text = fw_fill(
+                    translated_text,
+                    width=int((line.bbox[2] - line.bbox[0]) / (self.FONT_SIZE / 2)) - 1,
+                )
+                print(processed_text)
+
+                new_block = Image.new(
+                    "RGB",
+                    (
+                        line.bbox[2] - line.bbox[0],
+                        line.bbox[3] - line.bbox[1],
+                    ),
+                    color=(255, 255, 255),
+                )
+                draw = ImageDraw.Draw(new_block)
+                draw.text(
+                    (0, 0),
+                    text=processed_text,
+                    font=self.font,
+                    fill=(0, 0, 0),
+                )
+                new_block = np.array(new_block)
+                img[
+                    int(line.bbox[1]) : int(line.bbox[3]),
+                    int(line.bbox[0]) : int(line.bbox[2]),
+                ] = new_block
+
+        return img, original_img, reached_references
+
+    def __normalize_quad_box(
+        self, box: np.ndarray, image_shape: tuple[int, int, int]
+    ) -> tuple[int, int, int, int]:
+        points = np.array(box, dtype=np.float32).reshape(-1, 2)
+        x1 = max(0, int(np.floor(points[:, 0].min())))
+        y1 = max(0, int(np.floor(points[:, 1].min())))
+        x2 = min(image_shape[1], int(np.ceil(points[:, 0].max())))
+        y2 = min(image_shape[0], int(np.ceil(points[:, 1].max())))
+        return x1, y1, x2, y2
+
+    def __translate_one_page_with_ocr_boxes(
+        self,
+        img: np.ndarray,
+        original_img: np.ndarray,
+        reached_references: bool,
+    ) -> Tuple[np.ndarray, np.ndarray, bool]:
+        ocr_boxes, ocr_results, _ = self.ocr_model(img)
+        if ocr_boxes is None or ocr_results is None:
+            return img, original_img, reached_references
+
+        for box, result in zip(ocr_boxes, ocr_results):
+            text = result[0].strip()
+            if not text:
+                continue
+
+            text = re.sub(r"\n|\t|\[|\]|\/|\|", " ", text).strip()
+            if not text:
+                continue
+
+            if text.lower() in ["references", "reference"]:
+                reached_references = True
+                break
+
+            translated_text = self.__translate(text)
+            if not translated_text:
+                continue
+
+            x1, y1, x2, y2 = self.__normalize_quad_box(box, img.shape)
+            if x2 <= x1 or y2 <= y1:
+                continue
+
+            processed_text = fw_fill(
+                translated_text,
+                width=max(1, int((x2 - x1) / (self.FONT_SIZE / 2)) - 1),
+            )
+
+            new_block = Image.new("RGB", (x2 - x1, y2 - y1), color=(255, 255, 255))
+            draw = ImageDraw.Draw(new_block)
+            draw.text(
+                (0, 0),
+                text=processed_text,
+                font=self.font,
+                fill=(0, 0, 0),
+            )
+
+            img[y1:y2, x1:x2] = np.array(new_block)
 
         return img, original_img, reached_references
 
@@ -302,7 +456,7 @@ class TranslateApi:
         translated_texts = []
         for i, t in enumerate(texts):
             inputs = self.translate_tokenizer(t, return_tensors="pt").input_ids.to(
-                self.device
+                self.translation_device
             )
             outputs = self.translate_model.generate(inputs, max_length=512)
             res = self.translate_tokenizer.decode(outputs[0], skip_special_tokens=True)
@@ -372,5 +526,9 @@ class TranslateApi:
 
 
 if __name__ == "__main__":
-    translate_api = TranslateApi()
+    translate_api = TranslateApi(
+        model_root_dir=Path(
+            os.getenv("PDF_TRANSLATOR_MODEL_ROOT_DIR", "/resources/models/")
+        )
+    )
     translate_api.run()

@@ -20,7 +20,7 @@ To speed up the translation process, **translation is performed until "Reference
 
 This repository contains some unsolved issues. Pull requests for improvements are always welcome.
 
-## Installation
+## Installation (Docker / NVIDIA GPU)
 
 1. **Clone this repository**
 
@@ -41,6 +41,153 @@ This repository contains some unsolved issues. Pull requests for improvements ar
    make run
 ```
 
+Use bash in the GPU container:
+
+```bash
+make run-bash
+```
+
+Stop/remove GPU container:
+
+```bash
+make stop
+make rm
+```
+
+## Installation (Docker / CPU / Mac)
+
+This mode avoids NVIDIA runtime and works with Docker Desktop on macOS and CPU-only hosts.
+
+1. **Clone this repository**
+
+```bash
+git clone https://github.com/discus0434/pdf-translator.git
+cd pdf-translator/docker
+```
+
+2. **Build CPU image**
+
+```bash
+make build-cpu
+```
+
+3. **Run CPU container**
+
+```bash
+make run-cpu
+```
+
+Use bash in the CPU container:
+
+```bash
+make run-bash-cpu
+```
+
+Stop/remove CPU container:
+
+```bash
+make stop-cpu
+make rm-cpu
+```
+
+## Option A: CPU high-fidelity layout (detectron2)
+
+This mode tries to preserve layout better by enabling `LayoutAnalyzer` on CPU via detectron2.
+It is significantly slower and the image build is heavier than `build-cpu`.
+
+1. **Build high-fidelity CPU image**
+
+```bash
+cd pdf-translator/docker
+make build-cpu-hifi
+```
+
+2. **Run high-fidelity CPU container**
+
+```bash
+make run-cpu-hifi
+```
+
+3. **Open services**
+
+```bash
+GUI: http://localhost:9288
+API: http://localhost:9765
+```
+
+4. **Logs and cleanup**
+
+```bash
+make logs-cpu-hifi
+make clean-cpu-hifi
+```
+
+## Installation (Local / Mac Intel / M1 / CPU)
+
+This mode is experimental and slower than CUDA mode, but it enables local runs on macOS and CPU-only environments.
+
+1. **Clone this repository**
+
+```bash
+git clone https://github.com/discus0434/pdf-translator.git
+cd pdf-translator
+```
+
+2. **Install dependencies**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-cpu.txt
+```
+
+3. **Install Poppler**
+
+```bash
+brew install poppler
+```
+
+4. **Download additional model files**
+
+```bash
+wget https://github.com/adobe-fonts/source-han-serif/raw/release/OTF/Japanese/SourceHanSerif-Light.otf -P ./models
+mkdir -p ./models/unilm
+wget "https://huggingface.co/discus0434/publaynet-dit-base/resolve/main/publaynet_dit-b_cascade.pth" -P ./models/unilm
+```
+
+5. **Start backend and GUI**
+
+```bash
+export PDF_TRANSLATOR_MODEL_ROOT_DIR="$(pwd)/models"
+export PDF_TRANSLATOR_DEVICE=auto
+python server/main.py
+```
+
+Or from `docker/` via Makefile:
+
+```bash
+make local-run-api
+```
+
+In another terminal:
+
+```bash
+source .venv/bin/activate
+python gui.py
+```
+
+Or from `docker/` via Makefile:
+
+```bash
+make local-run-gui
+```
+
+Optional: if detectron2 is not available on your platform, force fallback layout mode:
+
+```bash
+export PDF_TRANSLATOR_LAYOUT_BACKEND=none
+```
+
 ## GUI Usage
 
 Access to GUI via browser.
@@ -59,10 +206,17 @@ You can throw a PDF file or a directory containing PDF files.
 
 The translated PDF files will be saved in `./outputs` directory.
 
+For local mode, run from repository root:
+
+```bash
+python3 cli.py -i path/to/input_pdf_or_dir
+```
+
 ## Requirements
 
-- NVIDIA GPU **(currently only support NVIDIA GPU)**
-- Docker
+- Docker + NVIDIA GPU (recommended, fastest)
+- or Python 3.10+ on Mac Intel / Apple Silicon / CPU-only machines (experimental mode)
+- Poppler (`pdf2image` backend)
 
 ## License
 
@@ -85,7 +239,7 @@ This repository is licensed under CC BY-NC 4.0. See [LICENSE](./LICENSE.md) for 
 ## TODOs
 
 - [ ] Make possible to highlight the translated text
-- [ ] Support M1 Mac or CPU
+- [x] Add experimental support for Mac and CPU fallback execution
 
 ## Contributors
 

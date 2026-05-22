@@ -1,0 +1,63 @@
+FROM python:3.10-slim
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_PREFER_BINARY=1 \
+    DEBCONF_NOWARNINGS=yes
+
+RUN apt-get update \
+    && apt-get -y upgrade \
+    && apt-get install -y --no-install-recommends \
+        poppler-utils \
+        wget \
+        curl \
+        git \
+        build-essential \
+        cmake \
+        ninja-build \
+        python3-dev \
+        libglib2.0-0 \
+        libgl1 \
+        libgomp1 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /tmp/* /var/tmp/*
+
+WORKDIR /resources
+
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+
+RUN pip install --no-cache-dir \
+    torch==2.5.1+cpu \
+    torchvision==0.20.1+cpu \
+    --index-url https://download.pytorch.org/whl/cpu
+
+RUN pip install --no-cache-dir \
+        opencv-python-headless \
+        networkx \
+        transformers==4.30 \
+        sentencepiece \
+        sacremoses \
+        pdf2image \
+        fastapi[uvicorn] \
+        uvicorn \
+        PyPDF2 \
+        matplotlib \
+        timm \
+        scipy \
+        shapely \
+        pyclipper \
+        scikit-image \
+        python-multipart \
+        onnxruntime \
+        requests \
+        gradio
+
+RUN pip install --no-cache-dir --no-build-isolation "git+https://github.com/facebookresearch/detectron2.git"
+
+RUN git clone https://github.com/microsoft/unilm.git /unilm \
+        && sed -i 's/from collections import Iterable/from collections.abc import Iterable/' \
+        /unilm/dit/object_detection/ditod/table_evaluation/data_structure.py
+
+RUN wget https://github.com/adobe-fonts/source-han-serif/raw/release/OTF/Japanese/SourceHanSerif-Light.otf -P /resources/models \
+        && mkdir -p /resources/models/unilm \
+        && wget "https://huggingface.co/discus0434/publaynet-dit-base/resolve/main/publaynet_dit-b_cascade.pth" -P /resources/models/unilm
